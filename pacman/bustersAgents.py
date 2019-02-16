@@ -290,7 +290,7 @@ class BasicAgentAA(BustersAgent):
         min = -1
         bestGhost = 0
         for i in range(0, len(arGhost)):
-            if min == -1 or arGhost[i]<min:
+            if (min == -1 or arGhost[i]<min) and gameState.getLivingGhosts()[i+1]:
                 min = arGhost[i]
                 bestGhost = i
 
@@ -300,22 +300,28 @@ class BasicAgentAA(BustersAgent):
         difX = pocPac[0] - posGhost[0]
         difY = pocPac[1] - posGhost[1]
 
-        if difX > 0 and Directions.WEST in legal:
-            move = Directions.WEST
+        if difY < 0 and Directions.NORTH in legal:
+            move = Directions.NORTH
         elif difX < 0 and Directions.EAST in legal:
             move = Directions.EAST
-        elif difY < 0 and Directions.NORTH in legal:
-            move = Directions.NORTH
+        elif difX > 0 and Directions.WEST in legal:
+            move = Directions.WEST
         elif difY > 0 and Directions.SOUTH in legal:
             move = Directions.SOUTH
+        else:
+            move_random = random.randint(0, 3)
+            if (move_random == 0) and Directions.WEST in legal:  move = Directions.WEST
+            if (move_random == 1) and Directions.EAST in legal: move = Directions.EAST
+            if (move_random == 2) and Directions.NORTH in legal:   move = Directions.NORTH
+            if (move_random == 3) and Directions.SOUTH in legal: move = Directions.SOUTH 
+        
+        print pocPac[0],", ",pocPac[1]
 
         #move_random = random.randint(0, 3)
         #if (move_random == 0) and Directions.WEST in legal:  move = Directions.WEST
         #if (move_random == 1) and Directions.EAST in legal: move = Directions.EAST
         #if (move_random == 2) and Directions.NORTH in legal:   move = Directions.NORTH
         #if (move_random == 3) and Directions.SOUTH in legal: move = Directions.SOUTH
-
-
 
         return move
 

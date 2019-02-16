@@ -11,7 +11,6 @@
 # Student side autograding was added by Brad Miller, Nick Hay, and
 # Pieter Abbeel (pabbeel@cs.berkeley.edu).
 
-
 """
 Busters.py is a vengeful variant of Pacman where Pacman hunts ghosts, but
 cannot see them.  Numbers at the bottom of the display are noisy distance

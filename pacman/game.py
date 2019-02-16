@@ -610,7 +610,7 @@ class Game:
         agentIndex = self.startingIndex
         numAgents = len( self.agents )
         step = 0
-        f = open("results.txt", "w+")
+        f = open("results.txt", "a")
 
         while not self.gameOver:
             # Fetch the next agent
