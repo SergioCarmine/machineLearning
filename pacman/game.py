@@ -610,6 +610,8 @@ class Game:
         agentIndex = self.startingIndex
         numAgents = len( self.agents )
         step = 0
+        f = open("results.txt", "w+")
+
         while not self.gameOver:
             # Fetch the next agent
             agent = self.agents[agentIndex]
@@ -713,6 +715,11 @@ class Game:
 
             if _BOINC_ENABLED:
                 boinc.set_fraction_done(self.getProgress())
+
+            if 'printLineData' in dir(agent):
+                f.write(agent.printLineData(self.state) + "\n")
+
+        f.close()
 
         # inform a learning agent of the game result
         for agentIndex, agent in enumerate(self.agents):
