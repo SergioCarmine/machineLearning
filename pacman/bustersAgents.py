@@ -81,6 +81,8 @@ class BustersAgent:
         self.inferenceModules = [inferenceType(a) for a in ghostAgents]
         self.observeEnable = observeEnable
         self.elapseTimeEnable = elapseTimeEnable
+        self.resultAnterior=""
+        self.classAnterior=""
 
     def registerInitialState(self, gameState):
         "Initializes beliefs and inference modules"
@@ -113,6 +115,58 @@ class BustersAgent:
         "By default, a BustersAgent just stops.  This should be overridden."
         return Directions.STOP
 
+    def printLineData(self, gameState):
+        
+        comida=gameState.getDistanceNearestFood() 
+        if comida == None:
+            comida=0
+        result = str(comida) + ", " 
+        array=gameState.data.ghostDistances
+        for i in range(len(array)): #hallamos la distancia a los fantasmas
+            if array[i] == None:
+                array[i]=0
+            result+=str(array[i]) + ", "
+
+        pocPac = gameState.getPacmanPosition() #posicion del pacman
+        result+= str(pocPac[0])+", "+str(pocPac[1])+", "
+
+        arGhost = gameState.data.ghostDistances #calcula la posicion del fantasma mas cercano
+        min = -1
+        bestGhost = 0
+        for i in range(0, len(arGhost)):
+            if (min == -1 or arGhost[i]<min) and gameState.getLivingGhosts()[i+1]:
+                min = arGhost[i]
+                bestGhost = i
+
+        posGhost = gameState.getGhostPositions()[bestGhost]
+
+        result+= str(posGhost[0])+", "+str(posGhost[1])+", "
+
+        diffX=posGhost[0]-pocPac[0]
+        diffY=posGhost[1]-pocPac[1]
+
+        if abs(diffX) >= abs(diffY): #calcula la direccion a la que moverse para llegar al fantasma mas cercano
+            if diffX < 0:
+                result+=  "West, "  
+            else:
+                result+= "East, "
+        else:
+            if diffY < 0:
+                result+= "South, "
+            else:
+                result+= "North, "
+
+        result+=str(gameState.getScore())+", "
+        resultFinal = ""
+
+        if self.resultAnterior != "":
+            resultFinal = self.resultAnterior + str(gameState.getScore()) + ", " + self.classAnterior
+
+        self.classAnterior = gameState.data.agentStates[0].getDirection()
+        self.resultAnterior = result
+
+        return resultFinal
+
 
 class BustersKeyboardAgent(BustersAgent, KeyboardAgent):
     "An agent controlled by the keyboard that displays beliefs about ghost positions."
@@ -126,6 +180,8 @@ class BustersKeyboardAgent(BustersAgent, KeyboardAgent):
 
     def chooseAction(self, gameState):
         return KeyboardAgent.getAction(self, gameState)
+
+    
 
 
 from distanceCalculator import Distancer
@@ -226,6 +282,9 @@ class BasicAgentAA(BustersAgent):
         BustersAgent.registerInitialState(self, gameState)
         self.distancer = Distancer(gameState.data.layout, False)
         self.countActions = 0
+        self.contRand=-1
+        self.actualRand=0
+        self.move_random=0
 
     ''' Example of counting something'''
 
@@ -300,6 +359,31 @@ class BasicAgentAA(BustersAgent):
         difX = pocPac[0] - posGhost[0]
         difY = pocPac[1] - posGhost[1]
 
+        if self.actualRand > 0:
+            if (self.move_random == 0) and Directions.WEST in legal:  move = Directions.WEST
+            if (self.move_random == 1) and Directions.EAST in legal: move = Directions.EAST
+            if (self.move_random == 2) and Directions.NORTH in legal:   move = Directions.NORTH
+            if (self.move_random == 3) and Directions.SOUTH in legal: move = Directions.SOUTH
+            self.actualRand-=1
+            if move == "":
+                self.actualRand = self.contRand
+                while(1):
+                    self.move_random = random.randint(0, 3)
+                    if (self.move_random == 0) and Directions.WEST in legal:  
+                        move = Directions.WEST 
+                        break
+                    if (self.move_random == 1) and Directions.EAST in legal: 
+                        move = Directions.EAST 
+                        break
+                    if (self.move_random == 2) and Directions.NORTH in legal:   
+                        move = Directions.NORTH 
+                        break
+                    if (self.move_random == 3) and Directions.SOUTH in legal: 
+                        move = Directions.SOUTH 
+                        break
+            return move
+
+
         if difY < 0 and Directions.NORTH in legal:
             move = Directions.NORTH
         elif difX < 0 and Directions.EAST in legal:
@@ -309,13 +393,25 @@ class BasicAgentAA(BustersAgent):
         elif difY > 0 and Directions.SOUTH in legal:
             move = Directions.SOUTH
         else:
-            move_random = random.randint(0, 3)
-            if (move_random == 0) and Directions.WEST in legal:  move = Directions.WEST
-            if (move_random == 1) and Directions.EAST in legal: move = Directions.EAST
-            if (move_random == 2) and Directions.NORTH in legal:   move = Directions.NORTH
-            if (move_random == 3) and Directions.SOUTH in legal: move = Directions.SOUTH 
+            self.contRand+=1
+            self.actualRand = self.contRand
+            while(1):
+                self.move_random = random.randint(0, 3)
+                if (self.move_random == 0) and Directions.WEST in legal:  
+                    move = Directions.WEST 
+                    break
+                if (self.move_random == 1) and Directions.EAST in legal: 
+                    move = Directions.EAST 
+                    break
+                if (self.move_random == 2) and Directions.NORTH in legal:   
+                    move = Directions.NORTH 
+                    break
+                if (self.move_random == 3) and Directions.SOUTH in legal: 
+                    move = Directions.SOUTH 
+                    break
         
-        print pocPac[0],", ",pocPac[1]
+        #print pocPac[0],", ",pocPac[1]
+        
 
         #move_random = random.randint(0, 3)
         #if (move_random == 0) and Directions.WEST in legal:  move = Directions.WEST
@@ -326,7 +422,49 @@ class BasicAgentAA(BustersAgent):
         return move
 
     def printLineData(self, gameState):
-        result = str(gameState.getDistanceNearestFood()) + ", " + str(gameState.data.ghostDistances) + "," + \
-                 str(gameState.getLivingGhosts())
+        comida=gameState.getDistanceNearestFood() 
+        if comida == None:
+            comida=0
+        result = str(comida) + ", " 
+        array=gameState.data.ghostDistances
+        for i in range(len(array)): #hallamos la distancia a los fantasmas
+            if array[i] == None:
+                array[i]=0
+            result+=str(array[i]) + ", "
+
+        pocPac = gameState.getPacmanPosition() #posicion del pacman
+        result+= str(pocPac[0])+", "+str(pocPac[1])+", "
+
+        arGhost = gameState.data.ghostDistances #calcula la posicion del fantasma mas cercano
+        min = -1
+        bestGhost = 0
+        for i in range(0, len(arGhost)):
+            if (min == -1 or arGhost[i]<min) and gameState.getLivingGhosts()[i+1]:
+                min = arGhost[i]
+                bestGhost = i
+
+        posGhost = gameState.getGhostPositions()[bestGhost]
+
+        result+= str(posGhost[0])+", "+str(posGhost[1])+", "
+
+        diffX=posGhost[0]-pocPac[0]
+        diffY=posGhost[1]-pocPac[1]
+
+        if abs(diffX) >= abs(diffY): #calcula la direccion a la que moverse para llegar al fantasma mas cercano
+            if diffX < 0:
+                result+=  "West, "  
+            else:
+                result+= "East, "
+        else:
+            if diffY < 0:
+                result+= "South, "
+            else:
+                result+= "North, "
+
+        result+=str(gameState.getScore())+", "
+
+        result+=gameState.data.agentStates[0].getDirection()
+        
         return result
+
 
