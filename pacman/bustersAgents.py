@@ -282,9 +282,9 @@ class BasicAgentAA(BustersAgent):
         BustersAgent.registerInitialState(self, gameState)
         self.distancer = Distancer(gameState.data.layout, False)
         self.countActions = 0
-        self.contRand=-1
-        self.actualRand=0
-        self.move_random=0
+        self.max_random=0
+        self.mov_anterior=-1
+        self.mov_num=-1
 
     ''' Example of counting something'''
 
@@ -359,56 +359,73 @@ class BasicAgentAA(BustersAgent):
         difX = pocPac[0] - posGhost[0]
         difY = pocPac[1] - posGhost[1]
 
-        if self.actualRand > 0:
-            if (self.move_random == 0) and Directions.WEST in legal:  move = Directions.WEST
-            if (self.move_random == 1) and Directions.EAST in legal: move = Directions.EAST
-            if (self.move_random == 2) and Directions.NORTH in legal:   move = Directions.NORTH
-            if (self.move_random == 3) and Directions.SOUTH in legal: move = Directions.SOUTH
-            self.actualRand-=1
-            if move == "":
-                self.actualRand = self.contRand
-                while(1):
-                    self.move_random = random.randint(0, 3)
-                    if (self.move_random == 0) and Directions.WEST in legal:  
-                        move = Directions.WEST 
-                        break
-                    if (self.move_random == 1) and Directions.EAST in legal: 
-                        move = Directions.EAST 
-                        break
-                    if (self.move_random == 2) and Directions.NORTH in legal:   
-                        move = Directions.NORTH 
-                        break
-                    if (self.move_random == 3) and Directions.SOUTH in legal: 
-                        move = Directions.SOUTH 
-                        break
-            return move
+        while(move==Directions.STOP):
+            
+            move_random = random.randint(0,self.max_random)
+            print move_random
+            if move_random==0:
+                self.max_random=0
+                print "MOVIMIENTO NORMAL"
+                if difY < 0 and Directions.NORTH in legal:
+                    move = Directions.NORTH
+                elif difX < 0 and Directions.EAST in legal:
+                    move = Directions.EAST
+                elif difX > 0 and Directions.WEST in legal:
+                    move = Directions.WEST
+                elif difY > 0 and Directions.SOUTH in legal:
+                    move = Directions.SOUTH
+                if move == Directions.STOP:
+                    self.max_random=6
+                    
+            elif move_random == 1 or move_random == 2:
+                print "MOVIMIENTO RANDOM"
+
+                cont_legal=0
+                mov_callejon = ""
+                if Directions.WEST in legal:
+                    cont_legal+=1
+                    mov_callejon = Directions.WEST
+                if Directions.NORTH in legal:
+                    cont_legal+=1
+                    mov_callejon = Directions.NORTH
+                if Directions.EAST in legal:
+                    cont_legal+=1
+                    mov_callejon = Directions.EAST
+                if Directions.SOUTH in legal:
+                    cont_legal+=1
+                    mov_callejon = Directions.SOUTH
+                if cont_legal == 1:
+                    self.max_random= 10
+                    move=mov_callejon
+                else:
+                    while(move == Directions.STOP):
+
+                        move_random = random.randint(0, 3)
+                        
+                        if (move_random == 0) and (move_random != self.mov_num) and Directions.WEST in legal:  
+                            move = Directions.WEST
+                        if (move_random == 1) and (move_random != self.mov_num) and Directions.EAST in legal: 
+                            move = Directions.EAST
+                        if (move_random == 2) and (move_random != self.mov_num) and Directions.NORTH in legal:   
+                            move = Directions.NORTH
+                        if (move_random == 3) and (move_random != self.mov_num) and Directions.SOUTH in legal: 
+                            move = Directions.SOUTH
+                
+                    if move != Directions.STOP:
+                        self.max_random-=1
+                    
+                    
+            else:
+                print "MOVIMIENTO ANTERIOR"
+                if self.mov_anterior in legal:
+                    move=self.mov_anterior
+                    self.max_random-=1
+                
+
+        
+                
 
 
-        if difY < 0 and Directions.NORTH in legal:
-            move = Directions.NORTH
-        elif difX < 0 and Directions.EAST in legal:
-            move = Directions.EAST
-        elif difX > 0 and Directions.WEST in legal:
-            move = Directions.WEST
-        elif difY > 0 and Directions.SOUTH in legal:
-            move = Directions.SOUTH
-        else:
-            self.contRand+=1
-            self.actualRand = self.contRand
-            while(1):
-                self.move_random = random.randint(0, 3)
-                if (self.move_random == 0) and Directions.WEST in legal:  
-                    move = Directions.WEST 
-                    break
-                if (self.move_random == 1) and Directions.EAST in legal: 
-                    move = Directions.EAST 
-                    break
-                if (self.move_random == 2) and Directions.NORTH in legal:   
-                    move = Directions.NORTH 
-                    break
-                if (self.move_random == 3) and Directions.SOUTH in legal: 
-                    move = Directions.SOUTH 
-                    break
         
         #print pocPac[0],", ",pocPac[1]
         
@@ -419,6 +436,16 @@ class BasicAgentAA(BustersAgent):
         #if (move_random == 2) and Directions.NORTH in legal:   move = Directions.NORTH
         #if (move_random == 3) and Directions.SOUTH in legal: move = Directions.SOUTH
 
+        if move == Directions.WEST:
+            self.mov_num=1
+        elif move ==Directions.EAST:
+            self.mov_num=0
+        elif move ==Directions.NORTH:
+            self.mov_num=3
+        elif move ==Directions.SOUTH:
+            self.mov_num=2
+
+        self.mov_anterior=move
         return move
 
     def printLineData(self, gameState):
@@ -462,9 +489,14 @@ class BasicAgentAA(BustersAgent):
                 result+= "North, "
 
         result+=str(gameState.getScore())+", "
+        resultFinal = ""
 
-        result+=gameState.data.agentStates[0].getDirection()
-        
-        return result
+        if self.resultAnterior != "":
+            resultFinal = self.resultAnterior + str(gameState.getScore()) + ", " + self.classAnterior
+
+        self.classAnterior = gameState.data.agentStates[0].getDirection()
+        self.resultAnterior = result
+
+        return resultFinal
 
 

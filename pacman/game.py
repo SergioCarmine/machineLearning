@@ -616,10 +616,10 @@ class Game:
             #, si no, se anade
             #la cabecera y se aber en formato write
             print "hola"
-            f = open("all_data_pacman.arff", "r")
+            f = open("test_othermaps_tutorial1.arff", "r")
             existe=1
         except IOError: #se anade la cabecera
-            f = open("all_data_pacman.arff", "w")
+            f = open("test_othermaps_tutorial1.arff", "w")
             f.write("@RELATION pacman-data\n" + "\n")
             f.write("@ATTRIBUTE comida-cercana NUMERIC\n")
             for i in range(numAgents-1):
@@ -637,7 +637,7 @@ class Game:
             f.write("\n@data\n")
         finally: #cuando se trate la excepcion se ejecuta el resto del programa
             if existe == 1:
-                f=open("all_data_pacman.arff", "a")
+                f=open("test_othermaps_tutorial1.arff", "a")
 
             while not self.gameOver:
                 # Fetch the next agent
